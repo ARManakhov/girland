@@ -1,0 +1,10 @@
+.pio
+CMakeListsPrivate.txt
+cmake-build-*/
+
+### CLION ###
+.idea
+*.iws
+*.iml
+*.ipr
+

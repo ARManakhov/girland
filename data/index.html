@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Гирлянда</title>
+    <base href="page">
+    <link rel="stylesheet" href="css/milligram.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <script>
+        function update(json) {
+            let data = JSON.parse(json);
+            document.getElementById("brtn").innerText = data.b + " / 25";
+            document.getElementById("mode").innerText = data.m + " / 16";
+        }
+
+        function clickButton(type) {
+            let xhr = new XMLHttpRequest();
+            let formData = new FormData(document.forms.person);
+            formData.append("t", type);
+            xhr.open('POST', "/b");
+            xhr.send(formData);
+            xhr.onload = function () {
+                if (xhr.status == 200) {
+                    update(xhr.response);
+                }
+            };
+        }
+
+        function changeTab(tabName) {
+            var i, tabcontent;
+            tabcontent = document.getElementsByClassName("container");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            document.getElementById(tabName).style.display = "block";
+        }
+    </script>
+</head>
+<body>
+<main class="wrapper">
+    <nav class="navigation">
+        <section>
+            <ul class="navigation-list">
+                <li class="navigation-item">
+                    <a class="navigation-link" onclick="changeTab('control')">Гирлянда</a>
+                </li>
+                <li class="navigation-item">
+                    <a class="navigation-link" onclick="changeTab('settings')">Настройка</a>
+                </li>
+                <li class="navigation-item">
+                    <a class="navigation-link" onclick="changeTab('update')">Обновление</a>
+                </li>
+            </ul>
+        </section>
+    </nav>
+    <section class="container" id="control">
+        <br>
+        <h2>Управление гирляндой</h2>
+        <br>
+        <h3>Яркость :</h3>
+        <div class="row">
+            <button class="col-sm-1" onclick="clickButton('-');"><h3>-</h3></button>
+            <h3 class=" col-sm-3 m-2" style="text-align: center;" id="brtn">%BRIGHTNESS% / 25</h3>
+            <button class="col-sm-1" onclick="clickButton('+');"><h3>+</h3></button>
+        </div>
+        <br>
+        <h3>Режим :</h3>
+        <div class="row">
+            <button class="col-sm-1" onclick="clickButton('<');"><h3><</h3></button>
+            <h3 class="col-sm-3 m-2" style="text-align: center;" id="mode">%MODE% / 16</h3>
+            <button class="col-sm-1" onclick="clickButton('>');"><h3>></h3></button>
+        </div>
+        <br>
+    </section>
+    <section class="container" id="settings" style="display: none">
+        <h2>Настройка WiFi</h2>
+        <div>Только латиница. Пароль должен быть длиннее 8 символов</div>
+
+        <form method="POST" action="updClient">
+            <fieldset>
+                <legend>Подключатся к :</legend>
+                <label for="ssid_c">SSID</label>
+                <input name="ssid_c" id="ssid_c" type="text">
+                <label for="pass_c">Пароль</label>
+                <input name="pass_c" id="pass_c" type="password">
+                <button>Сохранить</button>
+            </fieldset>
+        </form>
+        <form method="POST" action="updAP">
+            <fieldset>
+                <legend>Точка доступа :</legend>
+                <label for="ssid_a">SSID</label>
+                <input name="ssid_a" id="ssid_a" type="text">
+                <label for="pass_a">Пароль</label>
+                <input name="pass_a" id="pass_a" type="password">
+                <button>Сохранить</button>
+            </fieldset>
+        </form>
+    </section>
+    <section class="container" id="update"  style="display: none">
+        <form method='POST' action='/updCode' enctype='multipart/form-data'>
+            <fieldset>
+                <label for="code">Обновить прошивку</label>
+                <input id="code" type='file' name='file'>
+                <button>Update</button>
+            </fieldset>
+        </form>
+        <form method='POST' action='/updFS' enctype='multipart/form-data'>
+            <fieldset>
+                <label for="fs">Обновить файлы</label>
+                <input id="fs" type='file' name='file'>
+                <button>Update</button>
+            </fieldset>
+        </form>
+    </section>
+</main>
+</body>
+</html>
