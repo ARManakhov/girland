@@ -13,10 +13,9 @@
 
 #define UPDATES_PER_SECOND 100
 
-#define defaultClientSSID "Sirosh"
-#define defaultClientPass "0987654321"
-#define defaultAPSSID "sirosh_girland"
-#define defaultAPPass "0987654321"
-#define hostname "sirosh_girland"
+#define WIFI_CONF_FILE "/wifi.json"
+#define DEFAULT_AP_SSID "girland"
+#define DEFAULT_AP_PASSWORD "0987654321"
+#define hostname "girland"
 
 #endif  SETTINGS_H

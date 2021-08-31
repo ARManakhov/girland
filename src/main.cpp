@@ -6,9 +6,7 @@
 //
 
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
 #include <FastLED.h>
 #include <settings.h>
 #include <LittleFS.h>
@@ -93,9 +91,13 @@ void setup() {
 
 
     initWifi();
+    Serial.println("wifi Active");
+
     initFastLed();
+    Serial.println("fastled Active");
 
     setPallete(mode);
+    Serial.println("palete set");
 
     serverInit();
 

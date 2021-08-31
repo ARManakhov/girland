@@ -3,42 +3,29 @@
 //
 #include <Arduino.h>
 #include <LittleFS.h>
+#include <ArduinoJson.h>
 #include "config.h"
+#include "entity/WifiConnectionConfig.h"
+#include "settings.h"
 
-
-String *readConf(String filename) {
-    String *conf = new String[2];
-    File file = LittleFS.open(filename, "r");
-    if (!file) {
-        Serial.println("Failed to open file for reading");
-        conf[0] = "";
-        conf[1] = "";
+WifiConnectionConfig *readWifiConf() {
+    File file = LittleFS.open(WIFI_CONF_FILE, "r");
+    StaticJsonDocument<512> doc;
+    DeserializationError error = deserializeJson(doc, file);
+    if (error) {
+        Serial.print(F("Failed to read wifi config "));
+        Serial.println(error.c_str());
+        return new WifiConnectionConfig();
     } else {
-        String name = file.readStringUntil('\n');
-        String pass = file.readStringUntil('\n');
-        conf[0] = name;
-        conf[1] = pass;
+        return new WifiConnectionConfig(doc.as<JsonObject>());
     }
-    return conf;
 }
 
-
-
-void trySaveConf(String name, String pass, String filename) {
-    File file = LittleFS.open(filename, "w");
-    if (!file) {
-        Serial.println("Error opening file for writing");
-        return;
+bool saveConfig(JsonObject object) {
+    File file = LittleFS.open(WIFI_CONF_FILE, "w");
+    if (serializeJson(object, file)) {
+        Serial.println(F("Failed to write wifi config"));
+        return false;
     }
-    int bytesWritten = file.println(name);
-    bytesWritten += file.println(pass);
-    if (bytesWritten > 0) {
-        Serial.print("saved ");
-        Serial.print(filename);
-        Serial.println(bytesWritten);
-
-    } else {
-        Serial.println("File write failed");
-    }
-    file.close();
+    return true;
 }

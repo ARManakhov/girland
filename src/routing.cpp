@@ -7,10 +7,12 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <FastLED.h>
+#include <AsyncJson.h>
 #include "wifi.h"
 #include "config.h"
 #include "espUtils.h"
 #include "palette.h"
+#include "settings.h"
 
 int brightness = 120;
 int mode = 0;
@@ -52,21 +54,26 @@ void serverRoutingSetup() {
         request->send(LittleFS, "/css/main.css", "text/css");
     });
 
+    // Route to load mini-default.min.css file
+    server.on("/conf/wifi.json", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(LittleFS, WIFI_CONF_FILE, "plain/text");
+    });
+
     server.on("/b", HTTP_POST, [](AsyncWebServerRequest *request) {
         handleControls(request);
     });
 
-    server.on("/updAP", HTTP_POST, [](AsyncWebServerRequest *request) {
-        updateWifiAPAuth(request);
-    });
 
-    server.on("/updClient", HTTP_POST, [](AsyncWebServerRequest *request) {
-        updateWifiClientAuth(request);
-    });
+    AsyncCallbackJsonWebHandler *wifiUpdateHandler =
+            new AsyncCallbackJsonWebHandler("/upd/wifi", [](AsyncWebServerRequest *request, JsonVariant &json) {
+                initWifi(json.as<JsonObject>(), true);
+            });
+    wifiUpdateHandler->setMethod(HTTP_POST);
+    server.addHandler(wifiUpdateHandler);
 
-    server.on("/updCode", HTTP_POST, [](AsyncWebServerRequest *request) {}, httpProcessCodeUpdate);
+    server.on("/upd/code", HTTP_POST, [](AsyncWebServerRequest *request) {}, httpProcessCodeUpdate);
 
-    server.on("/updFS", HTTP_POST, [](AsyncWebServerRequest *request) {}, httpProcessFSUpdate);
+    server.on("/upd/files", HTTP_POST, [](AsyncWebServerRequest *request) {}, httpProcessFSUpdate);
 
     server.onNotFound(notFound);
 }
@@ -121,44 +128,6 @@ void handleControls(AsyncWebServerRequest *request) {
     }
 }
 
-
-void updateWifiAPAuth(AsyncWebServerRequest *request) {
-    if (request->hasParam("ssid_a", true) && request->hasParam("pass_a", true)) {
-        String name = request->getParam("ssid_a", true)->value();
-        String pass = request->getParam("pass_a", true)->value();
-        if (pass.length() >= 8) {
-            trySaveConf(name, pass, "/ap.conf");
-            Serial.println("saving ap");
-            initWifi();
-        } else {
-            Serial.println("err pass < 8 ");
-        }
-
-    } else {
-        Serial.println("err saving ap");
-    }
-    request->send(LittleFS, "/settings.html", "text/html");
-}
-
-
-void updateWifiClientAuth(AsyncWebServerRequest *request) {
-    if (request->hasParam("ssid_c", true) && request->hasParam("pass_c", true)) {
-        String name = request->getParam("ssid_c", true)->value();
-        String pass = request->getParam("pass_c", true)->value();
-        if (pass.length() >= 8) {
-            trySaveConf(name, pass, "/co.conf");
-            Serial.println("saving conn");
-            initWifi();
-        } else {
-            Serial.println("err pass < 8 ");
-        }
-    } else {
-        Serial.println("err saving ap");
-    }
-    request->send(LittleFS, "/settings.html", "text/html");
-}
-
-
 void httpProcessCodeUpdate(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data,
                            size_t len, bool final) {
     uint32_t free_space = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
@@ -191,7 +160,7 @@ void httpProcessFSUpdate(AsyncWebServerRequest *request, const String &filename,
     uint32_t free_space = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
     if (!index) {
         Update.runAsync(true);
-        size_t fsSize = ((size_t) & _FS_end - (size_t) & _FS_start);
+        size_t fsSize = ((size_t) &_FS_end - (size_t) &_FS_start);
         if (!Update.begin(fsSize, U_FS)) {
             Update.printError(Serial);
         }
