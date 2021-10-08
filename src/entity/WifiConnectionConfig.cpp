@@ -37,17 +37,17 @@ WifiConnectionConfig::WifiConnectionConfig(JsonObject object) : useAccessPoint(t
                                                                 accessPoint(WifiConnection(
                                                                         DEFAULT_AP_SSID,
                                                                         DEFAULT_AP_PASSWORD)) {
-    if (!(object["ap"]["ssid"] && object["ap"]["pass"])) {
+    if (object["ap"] && object["ap"]["ssid"] && object["ap"]["pass"]) {
         setAccessPoint(WifiConnection(object["ap"]["ssid"], object["ap"]["pass"]));
     }
-    if (!object["apOn"]) {
+    if (object["apOn"]) {
         setUseAccessPoint(object["apOn"]);
     }
 
     if (object.containsKey("co")) {
         JsonArray connectionsArray = object.getMember("co").as<JsonArray>();
         for (JsonVariant connectionJson: connectionsArray) {
-            if (!(connectionJson["ssid"] && connectionJson["pass"] && connectionJson["p"])) {
+            if (connectionJson["ssid"] && connectionJson["pass"] && connectionJson["p"]) {
                 connections.emplace_back(connectionJson["ssid"], connectionJson["pass"], connectionJson["p"]);
             }
         }

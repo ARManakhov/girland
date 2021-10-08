@@ -7,7 +7,11 @@
 
 void initWifi() {
     WiFi.mode(WIFI_AP_STA);
-    initWifi(readWifiConf());
+    WifiConnectionConfig *config = readWifiConf();
+    Serial.print("using conf:");
+    Serial.println(config->getAccessPoint().getSsid());
+    Serial.println(config->getConnections().size());
+    initWifi(config);
 }
 
 
@@ -24,10 +28,10 @@ void initWifi(WifiConnectionConfig *config) {
     if (config->isUseAccessPoint() || config->getConnections().empty()) {
         WiFi.softAP(config->getAccessPoint().getSsid(), config->getAccessPoint().getPassword());
     }
-    int resCount = WiFi.scanNetworks(); //todo optimize that crap
+    int8_t resCount = WiFi.scanNetworks(); //todo optimize that crap
     if (resCount != 0) {
         for (const WifiConnection &connection: config->getConnections()) {
-            for (int i = 0; i < resCount; ++i) {
+            for (int8_t i = 0; i < resCount; ++i) {
                 if (WiFi.SSID(i).equals(connection.getSsid())) {
                     WiFi.begin(connection.getSsid(), connection.getPassword());
                 }
