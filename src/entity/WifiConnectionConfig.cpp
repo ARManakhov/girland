@@ -47,7 +47,7 @@ WifiConnectionConfig::WifiConnectionConfig(JsonObject object) : useAccessPoint(t
     if (object.containsKey("co")) {
         JsonArray connectionsArray = object.getMember("co").as<JsonArray>();
         for (JsonVariant connectionJson: connectionsArray) {
-            if (connectionJson["ssid"] && connectionJson["pass"] && connectionJson["p"]) {
+            if (connectionJson["ssid"] && connectionJson["pass"]) {
                 connections.emplace_back(connectionJson["ssid"], connectionJson["pass"], connectionJson["p"]);
             }
         }

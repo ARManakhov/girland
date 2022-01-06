@@ -1,8 +1,13 @@
 {
   "apOn": true,
   "ap": {
-    "ssid": "gitland",
+    "ssid": "girland",
     "pass": "0987654321"
   },
-  "co": []
+  "co": [
+    {
+      "ssid": "test",
+      "pass": "test"
+    }
+  ]
 }

@@ -4,63 +4,51 @@
 
 #include "routing.h"
 #include <LittleFS.h>
-#include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <FastLED.h>
 #include <AsyncJson.h>
 #include "wifi.h"
-#include "config.h"
-#include "palette.h"
+#include "ledManager.h"
+#include "configManager.h"
 #include "settings.h"
-#include "update.h"
-
-int brightness = 128;
-int mode = 0;
+#include "OTAUpdate.h"
 
 AsyncWebServer server(80);
 
-void notFound(AsyncWebServerRequest *request) {
-    request->send(404, "text/plain", "Not found");
-}
-
-void ledGetHandler(AsyncWebServerRequest *request) {
-    AsyncResponseStream *response = request->beginResponseStream("application/json");
-    DynamicJsonDocument json(1024);
-    json["brightness"] = brightness;
-    json["mode"] = mode;
-    serializeJson(json, *response);
-    request->send(response);
-}
-
-void serverRoutingSetup() {
+void registerStaticContent(AsyncWebServer *server) {
     //Route to load index.html
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    server->on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(LittleFS, "/index.html", "text/html");
     });
 
-    // Route to load milligram.css file
-    server.on("/css/milligram.min.css", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(LittleFS, "/css/milligram.min.css", "text/css");
+    // Route to load any css file
+    server->on("/css/*", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(LittleFS, request->url(), "text/css");
     });
 
-    // Route to load mini-default.min.css file
-    server.on("/css/main.css", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(LittleFS, "/css/main.css", "text/css");
+    // Route to load any js file
+    server->on("/js/*", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(LittleFS, request->url(), "application/javascript");
     });
 
-    // Route to load mini-default.min.css file
-    server.on("/conf/wifi.json", HTTP_GET, [](AsyncWebServerRequest *request) {
+    server->onNotFound([](AsyncWebServerRequest *request) {
+        request->send(LittleFS, "/not_found.html", "text/html");
+    });
+}
+
+void registerStatic(AsyncWebServer *server) {
+    server->on("/conf/wifi.json", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(LittleFS, WIFI_CONF_FILE, "plain/text");
     });
+    server->on("/conf/led.json", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(LittleFS, LED_CONF_FILE, "plain/text");
+    });
 
-    AsyncCallbackJsonWebHandler *wifiUpdateHandler =
+    server->addHandler(
             new AsyncCallbackJsonWebHandler("/conf/wifi.json", [](AsyncWebServerRequest *request, JsonVariant &json) {
                 initWifi(json.as<JsonObject>(), true);
-            });
-    wifiUpdateHandler->setMethod(HTTP_POST);
-    server.addHandler(wifiUpdateHandler);
+            }));
 
-    AsyncCallbackJsonWebHandler *ledUpdateHandler =
+    server->addHandler(
             new AsyncCallbackJsonWebHandler("/conf/led.json", [](AsyncWebServerRequest *request, JsonVariant &json) {
                 JsonObject object = json.as<JsonObject>();
                 if (!object.containsKey("brightness")) {
@@ -77,29 +65,18 @@ void serverRoutingSetup() {
                     return;
                 }
                 int inMode = object["mode"];
-                if (inMode > 16 || inMode < 0) {
+                if (inMode > getLedConfig()->getPaletteList()->size() || inMode < 0) {
                     request->send(400, "application/json", "mode out of range");
                     return;
                 }
-                brightness = inBrightness;
-                mode = inMode;
-                setPallete(mode);
-                FastLED.setBrightness(brightness);
-                ledGetHandler(request);
-            });
-    wifiUpdateHandler->setMethod(HTTP_POST);
-    server.addHandler(ledUpdateHandler);
-
-    server.on("/conf/led.json", HTTP_GET, ledGetHandler);
-
-    server.on("/upd/code", HTTP_POST, [](AsyncWebServerRequest *request) {}, httpProcessCodeUpdate);
-
-    server.on("/upd/files", HTTP_POST, [](AsyncWebServerRequest *request) {}, httpProcessFSUpdate);
-
-    server.onNotFound(notFound);
+                updateConfig(json.as<JsonObject>());
+                request->send(LittleFS, LED_CONF_FILE, "plain/text");
+            }));
 }
 
 void serverInit() {
-    serverRoutingSetup();
+    registerStaticContent(&server);
+    registerStatic(&server);
+    registerOtaUpdate(&server);
     server.begin();
 }

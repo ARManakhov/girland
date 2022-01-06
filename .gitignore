@@ -9,3 +9,6 @@ cmake-build-*/
 *.ipr
 
 dump
+/ui/node_modules/
+/ui/package-lock.json
+/ui/dist/

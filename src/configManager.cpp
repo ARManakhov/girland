@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
-#include "config.h"
+#include "configManager.h"
 #include "entity/WifiConnectionConfig.h"
 #include "settings.h"
 
@@ -21,11 +21,27 @@ WifiConnectionConfig *readWifiConf() {
     }
 }
 
-bool saveConfig(JsonObject object) {
+bool saveWifiConfig(JsonObject object) {
     File file = LittleFS.open(WIFI_CONF_FILE, "w");
-    if (serializeJson(object, file)) {
-        Serial.println(F("Failed to write wifi config"));
-        return false;
+    serializeJson(object, file);
+    return true;
+}
+
+LedConfig *readLedConf() {
+    File file = LittleFS.open(LED_CONF_FILE, "r");
+    StaticJsonDocument<1024> doc;
+    DeserializationError error = deserializeJson(doc, file);
+    if (error) {
+        Serial.print(F("Failed to read led config "));
+        Serial.println(error.c_str());
+        return new LedConfig();
+    } else {
+        return new LedConfig(doc.as<JsonObject>());
     }
+}
+
+bool saveLedConfig(LedConfig *object) {
+    File file = LittleFS.open(LED_CONF_FILE, "w");
+    serializeJson(object->serialize(), file);
     return true;
 }

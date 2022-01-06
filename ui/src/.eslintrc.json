@@ -1,0 +1,10 @@
+{
+  "parser": "vue-eslint-parser",
+  "parserOptions": {
+    "ecmaVersion": 9,
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-async-promise-executor": 0
+  }
+}

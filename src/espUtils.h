@@ -5,8 +5,11 @@
 #ifndef GIRLAND_ESPUTILS_H
 #define GIRLAND_ESPUTILS_H
 
-
-void restartNow();
-
-
+void restart() {
+    Serial.println("Restart");
+    yield();
+    delay(1000);
+    yield();
+    ESP.restart();
+}
 #endif //GIRLAND_ESPUTILS_H

@@ -3,14 +3,10 @@
 //
 #include <ESP8266WiFi.h>
 #include "wifi.h"
-#include "config.h"
+#include "configManager.h"
 
 void initWifi() {
-    WiFi.mode(WIFI_AP_STA);
     WifiConnectionConfig *config = readWifiConf();
-    Serial.print("using conf:");
-    Serial.println(config->getAccessPoint().getSsid());
-    Serial.println(config->getConnections().size());
     initWifi(config);
 }
 
@@ -18,7 +14,7 @@ void initWifi() {
 boolean initWifi(JsonObject object, bool save) {
     bool saved = false;
     if (save) {
-        saved = saveConfig(object);
+        saved = saveWifiConfig(object);
     }
     initWifi(new WifiConnectionConfig(object));
     return saved;
@@ -26,16 +22,15 @@ boolean initWifi(JsonObject object, bool save) {
 
 void initWifi(WifiConnectionConfig *config) {
     if (config->isUseAccessPoint() || config->getConnections().empty()) {
+        WiFi.mode(WIFI_AP_STA);
         WiFi.softAP(config->getAccessPoint().getSsid(), config->getAccessPoint().getPassword());
+    } else {
+        WiFi.mode(WIFI_STA);
     }
     int8_t resCount = WiFi.scanNetworks(); //todo optimize that crap
     if (resCount != 0) {
         for (const WifiConnection &connection: config->getConnections()) {
-            for (int8_t i = 0; i < resCount; ++i) {
-                if (WiFi.SSID(i).equals(connection.getSsid())) {
-                    WiFi.begin(connection.getSsid(), connection.getPassword());
-                }
-            }
+            WiFi.begin(connection.getSsid(), connection.getPassword());
         }
     }
     WiFi.scanComplete();
