@@ -56,7 +56,6 @@ void LedConfig::update(JsonObject object) {
             paletteList = new std::vector<PaletteConfig *>();
             for (JsonVariant palette: palettes) {
                 if (palette.containsKey("name") && palette.containsKey("colors")) {
-                    Serial.println();
                     paletteList->emplace_back(new PaletteConfig(palette));
                 }
             }
