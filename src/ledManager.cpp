@@ -14,11 +14,14 @@ static volatile size_t blendedIndex = 0;
 static volatile float changeSpeed = 0.5; //color per second for one pixel
 static volatile int updatesAdj = UPDATES_PER_SECOND / changeSpeed;
 static LedConfig *ledConfig;
-LedConfig * getLedConfig(){
+
+LedConfig *getLedConfig() {
     return ledConfig;
 }
+
 void ledShow() {
-    std::vector<RgbColor> *currentPalette = ledConfig->getPaletteList()->at(ledConfig->getMode())->getColors();
+    std::vector<RgbColor> *currentPalette = ledConfig->getPaletteList()
+            ->at(ledConfig->getPaletteList()->size() > ledConfig->getMode() ? ledConfig->getMode() : 0)->getColors();
 
     for (int i = 0; i < mainStrip.PixelCount(); ++i) {
         if (++blendedIndex >= currentPalette->size() * updatesAdj) {
