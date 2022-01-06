@@ -32,7 +32,7 @@ LedConfig::LedConfig() : brightness(0), mode(0) {
 }
 
 BasicJsonDocument<ArduinoJson6185_91::DefaultAllocator> LedConfig::serialize() {
-    auto jsonDoc = DynamicJsonDocument(512);
+    auto jsonDoc = DynamicJsonDocument(8192);
     JsonObject jsonObject = jsonDoc.to<JsonObject>();
     jsonObject["mode"] = mode;
     jsonObject["brightness"] = brightness;
@@ -61,4 +61,12 @@ void LedConfig::update(JsonObject object) {
             }
         }
     }
+}
+
+void LedConfig::setBrightness(uint8_t brightness) {
+    LedConfig::brightness = brightness;
+}
+
+void LedConfig::setMode(uint8_t mode) {
+    LedConfig::mode = mode;
 }

@@ -14,6 +14,12 @@ private:
 
     uint8_t brightness;
     uint8_t mode;
+public:
+    void setBrightness(uint8_t brightness);
+
+    void setMode(uint8_t mode);
+
+private:
     std::vector<PaletteConfig *> *paletteList;
 public:
     uint8_t getBrightness() const;

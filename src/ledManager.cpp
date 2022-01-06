@@ -44,6 +44,16 @@ void updateConfig(JsonObject newLedConfig) {
     saveLedConfig(ledConfig);
 }
 
+void updateMode(int mode) {
+    ledConfig->setMode(mode);
+    saveLedConfig(ledConfig);
+}
+
+void updateBrightness(int brightness) {
+    ledConfig->setBrightness(brightness);
+    saveLedConfig(ledConfig);
+}
+
 void initLed() {
     ledConfig = readLedConf();
     saveLedConfig(ledConfig);

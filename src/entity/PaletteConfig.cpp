@@ -35,7 +35,7 @@ PaletteConfig::PaletteConfig() : name("error") {
 }
 
 BasicJsonDocument<ArduinoJson6185_91::DefaultAllocator> PaletteConfig::serialize() {
-    auto jsonDoc = DynamicJsonDocument(512);
+    auto jsonDoc = DynamicJsonDocument(8192);
     JsonObject json = jsonDoc.to<JsonObject>();
     json["name"] = name;
     JsonArray colorsJson = jsonDoc.createNestedArray("colors");

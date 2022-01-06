@@ -14,7 +14,11 @@ void ledShow();
 
 void updateConfig(JsonObject newLedConfig);
 
-LedConfig * getLedConfig();
+void updateMode(int mode);
+
+void updateBrightness(int brightness);
+
+LedConfig *getLedConfig();
 
 void initLed();
 
