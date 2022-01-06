@@ -1,8 +1,7 @@
-import {Server, Response} from 'miragejs'
+import {Response, Server} from 'miragejs'
 
 export function makeServer({environment = "development"} = {}) {
-
-    let server = new Server({
+    return new Server({
         environment,
 
         routes() {
@@ -42,6 +41,4 @@ export function makeServer({environment = "development"} = {}) {
             });
         },
     })
-
-    return server
 }

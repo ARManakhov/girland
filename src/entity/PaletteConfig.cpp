@@ -6,7 +6,11 @@
 
 PaletteConfig::PaletteConfig(JsonVariant json) {
     colors = new std::vector<RgbColor>();
-    name = json.containsKey("name") ? json["name"] : 0;
+    if (json.containsKey("name") && json["name"].is<String>()) {
+        name = json["name"].as<String>();
+    } else {
+        name = "";
+    }
     if (json.containsKey("colors")) {
         JsonArray colorsJson = json.getMember("colors").as<JsonArray>();
         for (JsonVariant color: colorsJson) {

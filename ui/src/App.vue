@@ -3,23 +3,26 @@
     <nav class="navbar">
       <ul>
         <li>
-          <a class="navigation-link" v-on:click="changeTab('control')">Кот</a>
+          <a class="navigation-link" v-on:click="changeTab(0)">Кот</a>
         </li>
         <li>
-          <a class="navigation-link" v-on:click="changeTab('settings')">Настройка</a>
+          <a class="navigation-link" v-on:click="changeTab(1)">Настройка палитры</a>
         </li>
         <li>
-          <a class="navigation-link" v-on:click="changeTab('update')">Обновление</a>
+          <a class="navigation-link" v-on:click="changeTab(2)">Настройка wifi</a>
+        </li>
+        <li>
+          <a class="navigation-link" v-on:click="changeTab(3)">Обновление</a>
         </li>
       </ul>
     </nav>
-    <section class="container" id="control">
+    <section class="container">
       <br>
       <h2 style="text-align: center;">Управление котом</h2>
       <br>
       <h3>Яркость :</h3>
       <div class="row">
-        <input class="column" type="range" id="brightness" name="brightness" v-on:change="saveLedConf()"
+        <input class="column" type="range" id="brightness" name="brightness" v-on:change="saveModeLedConf()"
                v-model="ledConf.brightness" min="0" max="255" step="17">
       </div>
       <br>
@@ -37,10 +40,73 @@
       </div>
       <br>
     </section>
-    <section class="container" id="settings" style="display: none">
+    <section class="container" style="display: none">
+      <h2>Настройка Палитры</h2>
+      <table>
+        <thead>
+        <tr>
+          <th>name</th>
+          <th>colors</th>
+          <th>action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(p,pi) in ledConf.paletteList">
+          <td class="action-td"><input class="table-elem" v-model="p.name"></td>
+          <td class="p-0">
+            <div class="row p-0">
+              <template class="color-box" v-for="(c,ci) in p.colors">
+                <div class="color-box" v-bind:style="{backgroundColor:'rgb(' + c.r + ',' + c.g +',' + c.b + ')'}"
+                     v-on:click="choseColor(pi,ci)">💡
+                </div>
+                <div class="color-change" v-bind:style="{color:'rgb(' + c.r + ',' + c.g +',' + c.b + ')'}"
+                     v-on:click="addNewColor(pi, ci+1)">--
+                </div>
+              </template>
+              <div class="end-color-box" v-on:click="addNewColor(pi, null)">+</div>
+            </div>
+          </td>
+          <td class="action-td">
+            <button class="table-elem delete" v-on:click="deletePalette(pi)">🗑</button>
+          </td>
+        </tr>
+        <tr>
+          <td class="action-td"><input class="table-elem" v-model="newPalette.name"></td>
+          <td class="p-0">
+            <div class="row p-0">
+              <template class="color-box" v-for="(c, ci) in newPalette.colors">
+                <div class="color-box" v-bind:style="{backgroundColor:'rgb(' + c.r + ',' + c.g +',' + c.b + ')'}"
+                     v-on:click="choseColor(null, ci)">💡
+                </div>
+                <div class="color-change" v-bind:style="{color:'rgb(' + c.r + ',' + c.g +',' + c.b + ')'}"
+                     v-on:click="addNewColor(null, null)">--
+                </div>
+              </template>
+              <div class="end-color-box" v-on:click="addNewColor(null, null)">+</div>
+            </div>
+          </td>
+          <td class="action-td">
+            <Button class="table-elem" v-on:click="addPalette()">add</Button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <Button v-on:click="savePalettesLedConf()">save</Button>
+      <div class="row">
+        <div class="column column-center">
+          <div style="text-align:center;width: 300px;margin: 0 auto;" id="picker"></div>
+        </div>
+        <div class="column column-center">
+          <label class="label-inline" for="hex">RGB hex code</label>
+          <input id="hex" v-model="colorPicker.color.hexString"/>
+          <button id="color_del">delete color</button>
+        </div>
+      </div>
+    </section>
+    <section class="container" style="display: none">
       <h2>Настройка WiFi</h2>
       <div>Только латиница. Пароль должен быть длиннее 8 символов</div>
-      <table id='apConf'>
+      <table>
         <thead>
         <tr>
           <th>SSID</th>
@@ -50,8 +116,8 @@
         </thead>
         <tbody>
         <tr>
-          <td><input class="table-elem ssid" placeholder="loading" :value="wifiConf.ap.ssid"></td>
-          <td><input class="table-elem password" placeholder="loading" :value="wifiConf.ap.pass"></td>
+          <td><input class="table-elem" placeholder="loading" :value="wifiConf.ap.ssid"></td>
+          <td><input class="table-elem" placeholder="loading" :value="wifiConf.ap.pass"></td>
           <td>
             <div class="row">
               <div class='column'>
@@ -62,7 +128,7 @@
         </tr>
         </tbody>
       </table>
-      <table id='coConf'>
+      <table>
         <thead>
         <tr>
           <th>SSID</th>
@@ -72,9 +138,9 @@
         </thead>
         <tbody>
         <tr v-for="(c,i) in wifiConf.co">
-          <td class="ssid">{{ c.ssid }}</td>
-          <td class="password">{{ c.pass }}</td>
-          <td>
+          <td>{{ c.ssid }}</td>
+          <td>{{ c.pass }}</td>
+          <td class="action-td">
             <div class="row">
               <div class="column">
                 <button class="table-elem up">ᐱ</button>
@@ -91,19 +157,15 @@
         <tr>
           <td><input class="table-elem" v-model="newConn.ssid"></td>
           <td><input class="table-elem" v-model="newConn.pass"></td>
-          <td>
-            <div class="row">
-              <div class='column'>
-                <Button class="table-elem" v-on:click="addConnection()">add</Button>
-              </div>
-            </div>
+          <td class="action-td">
+            <Button class="table-elem" v-on:click="addConnection()">add</Button>
           </td>
         </tr>
         </tbody>
       </table>
       <Button v-on:click="saveWifiConf()">save</Button>
     </section>
-    <section class="container" id="update" style="display: none">
+    <section class="container" style="display: none">
       <fieldset id="code_fs">
         <h2>Update</h2>
         <div class="row">
@@ -136,6 +198,8 @@
 </template>
 
 <script>
+import iro from '@jaames/iro';
+
 export default {
   name: 'smart cat',
   metaInfo: {
@@ -143,6 +207,11 @@ export default {
   },
   data() {
     return {
+      colorPicker: null,
+      newPalette: {
+        name: null,
+        colors: []
+      },
       ota: {
         uploading: false,
         progress: 0,
@@ -165,7 +234,7 @@ export default {
         co: []
       },
       ledConf: {
-        mode: 1,
+        mode: 0,
         brightness: 128,
         paletteList: []
       },
@@ -173,14 +242,46 @@ export default {
   },
 
   methods: {
-    saveLedConf: function () {
+    addNewColor: function (pi, ci) {
+      let palette = pi == null ? this.newPalette : this.ledConf.paletteList[pi];
+      if (ci == null) {
+        ci = palette.colors.length;
+      }
+      palette.colors.splice(ci, 0, {r: 127, g: 127, b: 127});
+      this.choseColor(pi, ci);
+    },
+    choseColor: function (pi, ci) {
+      let p = pi == null ? this.newPalette : this.ledConf.paletteList[pi];
+      let c = p.colors[ci];
+      this.colorPicker.off(['color:change']);
+      this.colorPicker.on(['color:change'], color => {
+        c.r = color.rgb.r;
+        c.g = color.rgb.g;
+        c.b = color.rgb.b;
+      })
+      document.getElementById("color_del").onclick = () => this.deleteColor(p, ci);
+    },
+    deleteColor: function (p, ci) {
+      p.colors.splice(ci, 1);
+    },
+    saveModeLedConf: function () {
       fetch("/conf/led.json", {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(this.ledConf)
+        body: JSON.stringify({mode: this.ledConf.mode, brightness: this.ledConf.brightness})
+      });
+    },
+    savePalettesLedConf: function () {
+      fetch("/conf/led.json", {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({paletteList: this.ledConf.paletteList})
       });
     },
     saveWifiConf: function () {
@@ -196,18 +297,26 @@ export default {
     deleteConnection: function (i) {
       this.wifiConf.co.splice(i, 1)
     },
+    deletePalette: function (i) {
+      this.ledConf.paletteList.splice(i, 1)
+    },
     addConnection: function () {
       this.wifiConf.co.push({ssid: this.newConn.ssid, pass: this.newConn.pass})
       this.newConn.ssid = null;
       this.newConn.pass = null;
     },
-    changeTab: function (tabName) {
+    addPalette: function () {
+      this.ledConf.paletteList.push({colors: this.newPalette.colors, name: this.newPalette.name});
+      this.newPalette.colors = [];
+      this.newPalette.name = null;
+      this.colorPicker.off(['color:change']);
+    },
+    changeTab: function (index) {
       let i, tabContent;
       tabContent = document.getElementsByClassName("container");
       for (i = 0; i < tabContent.length; i++) {
-        tabContent[i].style.display = "none";
+        tabContent[i].style.display = index === i ? "block" : "none";
       }
-      document.getElementById(tabName).style.display = "block";
     },
     clickButton: function (type) {
       if (type === '>' && this.ledConf.mode < this.ledConf.paletteList.length - 1) {
@@ -215,7 +324,7 @@ export default {
       } else if (type === '<' && this.ledConf.mode > 0) {
         this.ledConf.mode = this.ledConf.mode - 1;
       } else return;
-      this.saveLedConf()
+      this.saveModeLedConf()
     },
     fileMD5(file) {
       return new Promise((resolve, reject) => {
@@ -308,6 +417,7 @@ export default {
     fetch("/conf/wifi.json")
         .then(r => r.json())
         .then(d => this.wifiConf = d);
+    this.colorPicker = new iro.ColorPicker('#picker');
   },
 };
 </script>
@@ -364,5 +474,35 @@ input[type='checkbox'].table-elem {
 button.table-elem {
   margin: 0;
   width: 100%;
+}
+
+.action-td {
+  width: 20%
+}
+
+.end-color-box,
+.color-box {
+  display: block;
+  max-width: 100%;
+  border-radius: .4rem;
+  padding-left: .4rem;
+  padding-right: .4rem;
+  width: 3rem;
+  text-align: center;
+}
+
+.end-color-box {
+  background: linear-gradient(90deg, Red, Orange, Yellow, Green, Blue, Indigo, violet);
+  color: black;
+}
+
+.color-change {
+  display: block;
+  margin-left: 0;
+  border-radius: .4rem;
+  width: 2rem;
+  text-align: center;
+  padding-left: .4rem;
+  padding-right: .4rem;
 }
 </style>

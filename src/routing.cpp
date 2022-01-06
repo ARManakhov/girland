@@ -46,30 +46,27 @@ void registerStatic(AsyncWebServer *server) {
     server->addHandler(
             new AsyncCallbackJsonWebHandler("/conf/wifi.json", [](AsyncWebServerRequest *request, JsonVariant &json) {
                 initWifi(json.as<JsonObject>(), true);
+                request->send(LittleFS, WIFI_CONF_FILE, "plain/text");
             }));
 
     server->addHandler(
             new AsyncCallbackJsonWebHandler("/conf/led.json", [](AsyncWebServerRequest *request, JsonVariant &json) {
                 JsonObject object = json.as<JsonObject>();
-                if (!object.containsKey("brightness")) {
-                    request->send(400, "application/json", "brightness is not present");
-                    return;
+                if (object.containsKey("brightness")) {
+                    int inBrightness = object["brightness"];
+                    if (inBrightness > 255 || inBrightness < 0) {
+                        request->send(400, "application/json", "brightness out of range");
+                        return;
+                    }
                 }
-                if (!object.containsKey("mode")) {
-                    request->send(400, "application/json", "mode is not present");
-                    return;
+                if (object.containsKey("mode")) {
+                    int inMode = object["mode"];
+                    if (inMode > getLedConfig()->getPaletteList()->size() || inMode < 0) {
+                        request->send(400, "application/json", "mode out of range");
+                        return;
+                    }
                 }
-                int inBrightness = object["brightness"];
-                if (inBrightness > 255 || inBrightness < 0) {
-                    request->send(400, "application/json", "brightness out of range");
-                    return;
-                }
-                int inMode = object["mode"];
-                if (inMode > getLedConfig()->getPaletteList()->size() || inMode < 0) {
-                    request->send(400, "application/json", "mode out of range");
-                    return;
-                }
-                updateConfig(json.as<JsonObject>());
+                updateConfig(object);
                 request->send(LittleFS, LED_CONF_FILE, "plain/text");
             }));
 }

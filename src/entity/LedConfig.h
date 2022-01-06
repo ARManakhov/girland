@@ -18,7 +18,7 @@ private:
 public:
     uint8_t getBrightness() const;
 
-    void update(JsonVariant object);
+    void update(JsonObject object);
 
     uint8_t getMode() const;
 

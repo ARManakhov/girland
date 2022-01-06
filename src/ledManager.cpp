@@ -21,11 +21,11 @@ void ledShow() {
     std::vector<RgbColor> *currentPalette = ledConfig->getPaletteList()->at(ledConfig->getMode())->getColors();
 
     for (int i = 0; i < mainStrip.PixelCount(); ++i) {
-        if (++blendedIndex == currentPalette->size() * updatesAdj) {
+        if (++blendedIndex >= currentPalette->size() * updatesAdj) {
             blendedIndex = 0;
         }
         size_t prevColorIndex = blendedIndex / updatesAdj;
-        size_t nextColorIndex = prevColorIndex == (currentPalette->size() - 1)
+        size_t nextColorIndex = prevColorIndex >= (currentPalette->size() - 1)
                                 ? 0
                                 : prevColorIndex + 1;
         mainStrip.SetPixelColor(i, RgbColor::LinearBlend(currentPalette->at(prevColorIndex),

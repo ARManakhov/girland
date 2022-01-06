@@ -9,7 +9,6 @@ LedConfig::LedConfig(JsonObject object) {
     brightness = 255;
     update(object);
     if (paletteList == nullptr || paletteList->empty()) {
-        Serial.println("here4");
         paletteList = new std::vector<PaletteConfig *>();
         paletteList->emplace_back(new PaletteConfig());
         Serial.println(paletteList->size());
@@ -44,7 +43,7 @@ BasicJsonDocument<ArduinoJson6185_91::DefaultAllocator> LedConfig::serialize() {
     return jsonDoc;
 }
 
-void LedConfig::update(JsonVariant object) {
+void LedConfig::update(JsonObject object) {
     if (object.containsKey("mode")) {
         mode = object["mode"];
     }
@@ -52,12 +51,12 @@ void LedConfig::update(JsonVariant object) {
         brightness = object["brightness"];
     }
     if (object.containsKey("paletteList")) {
-        Serial.println("has paletteList");
         JsonArray palettes = object.getMember("paletteList").as<JsonArray>();
         if (palettes.size() != 0) {
             paletteList = new std::vector<PaletteConfig *>();
             for (JsonVariant palette: palettes) {
                 if (palette.containsKey("name") && palette.containsKey("colors")) {
+                    Serial.println();
                     paletteList->emplace_back(new PaletteConfig(palette));
                 }
             }
