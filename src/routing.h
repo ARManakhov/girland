@@ -10,5 +10,8 @@ extern int mode;
 
 void serverInit();
 
+void onLedUpdate();
+
+void onWifiUpdate();
 
 #endif //GIRLAND_ROUTING_H

@@ -13,6 +13,7 @@
 #include "OTAUpdate.h"
 
 AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
 
 void registerStaticContent(AsyncWebServer *server) {
     //Route to load index.html
@@ -71,9 +72,26 @@ void registerStatic(AsyncWebServer *server) {
             }));
 }
 
+void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data,
+               size_t len) {
+    if (type == WS_EVT_CONNECT) {
+        client->ping();
+    }
+}
+
+void onLedUpdate() {
+    ws.textAll("led");
+}
+
+void onWifiUpdate() {
+    ws.textAll("wifi");
+}
+
 void serverInit() {
     registerStaticContent(&server);
     registerStatic(&server);
     registerOtaUpdate(&server);
+    ws.onEvent(onWsEvent);
+    server.addHandler(&ws);
     server.begin();
 }

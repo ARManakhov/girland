@@ -7,6 +7,7 @@
 #include "configManager.h"
 #include "entity/WifiConnectionConfig.h"
 #include "settings.h"
+#include "routing.h"
 
 WifiConnectionConfig *readWifiConf() {
     File file = LittleFS.open(WIFI_CONF_FILE, "r");
@@ -24,6 +25,7 @@ WifiConnectionConfig *readWifiConf() {
 bool saveWifiConfig(JsonObject object) {
     File file = LittleFS.open(WIFI_CONF_FILE, "w");
     serializeJson(object, file);
+    onWifiUpdate();
     return true;
 }
 
@@ -43,5 +45,6 @@ LedConfig *readLedConf() {
 bool saveLedConfig(LedConfig *object) {
     File file = LittleFS.open(LED_CONF_FILE, "w");
     serializeJson(object->serialize(), file);
+    onLedUpdate();
     return true;
 }

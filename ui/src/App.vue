@@ -254,6 +254,7 @@ export default {
       let p = pi == null ? this.newPalette : this.ledConf.paletteList[pi];
       let c = p.colors[ci];
       this.colorPicker.off(['color:change']);
+      this.colorPicker.color.set(c);
       this.colorPicker.on(['color:change'], color => {
         c.r = color.rgb.r;
         c.g = color.rgb.g;
@@ -408,17 +409,30 @@ export default {
       this.error = null;
       this.success = false;
     },
+    getLedConf: function () {
+      fetch("/conf/led.json")
+          .then(r => r.json())
+          .then(d => this.ledConf = d);
+    },
+    getWifiConf: function () {
+      fetch("/conf/wifi.json")
+          .then(r => r.json())
+          .then(d => this.wifiConf = d);
+    },
   },
-
   created() {
-    fetch("/conf/led.json")
-        .then(r => r.json())
-        .then(d => this.ledConf = d);
-    fetch("/conf/wifi.json")
-        .then(r => r.json())
-        .then(d => this.wifiConf = d);
+    this.getLedConf();
+    this.getWifiConf();
     this.colorPicker = new iro.ColorPicker('#picker');
-  },
+    let connection = new WebSocket('ws://' + location.host + '/ws');
+    connection.onmessage = (event) => {
+      if (event.data == "led") {
+        this.getLedConf();
+      } else if (event.data == "wifi") {
+        this.getWifiConf();
+      }
+    }
+  }
 };
 </script>
 
